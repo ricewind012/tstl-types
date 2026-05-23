@@ -5,4 +5,5 @@ opportunity to use :-).
 
 ## What
 
+- [lua-socket](./types/lgi/index.d.ts)
 - [lua-socket](./types/lua-socket/index.d.ts)

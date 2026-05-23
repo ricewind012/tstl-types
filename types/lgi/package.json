@@ -1,0 +1,21 @@
+{
+	"name": "@tstl-types/lgi",
+	"description": "TypeScript definitions for the lgi library",
+	"version": "1.0.0",
+	"keywords": [
+		"lua",
+		"typescript",
+		"tstl"
+	],
+	"types": "./index.d.ts",
+	"private": true,
+	"dependencies": {
+		"@typescript-to-lua/language-extensions": "^1.19.0",
+		"lua-types": "^2.14.1"
+	},
+	"bugs": {
+		"url": "https://github.com/ricewind012/tstl-types/issues"
+	},
+	"homepage": "https://github.com/ricewind012/tstl-types",
+	"repository": "https://github.com/ricewind012/tstl-types.git"
+}
