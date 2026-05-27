@@ -1,11 +1,32 @@
-type StaticMethodList = Record<string, (...args: any[]) => any>;
-type StaticMethods<List extends StaticMethodList, FirstArg> = {
+/**
+ * A `Record` with only functions in it.
+ */
+type MethodList = Record<string, (...args: any[]) => any>;
+
+/**
+ * Appends `this: void` to all functions in a type.
+ */
+type StaticMethods<List extends MethodList> = {
 	[K in keyof List]: (
+		this: void,
+		...args: Parameters<List[K]>
+	) => ReturnType<List[K]>;
+};
+
+/**
+ * Like {@link StaticMethods}, but appends `FirstArg` as the first argument.
+ */
+type StaticMethodsWithArg<List extends MethodList, FirstArg> = {
+	[K in keyof List]: (
+		this: void,
 		arg0: FirstArg,
 		...args: Parameters<List[K]>
 	) => ReturnType<List[K]>;
 };
 
+/**
+ * @noResolution
+ */
 declare module "lgi" {
 	// #region Common
 	export enum CairoAntialias {
@@ -158,7 +179,7 @@ declare module "lgi" {
 	// #endregion
 
 	// #region Context
-	interface ContextMethodList extends StaticMethodList {
+	interface ContextMethodList extends MethodList {
 		status(): CairoStatus;
 		save(): void;
 		restore(): void;
@@ -338,7 +359,7 @@ declare module "lgi" {
 		INVALID,
 	}
 
-	interface DeviceMethodList extends StaticMethodList {
+	interface DeviceMethodList extends MethodList {
 		status(): CairoStatus;
 		finish(): void;
 		flush(): void;
@@ -373,7 +394,7 @@ declare module "lgi" {
 		BOLD,
 	}
 
-	interface FontFaceMethodList extends StaticMethodList {
+	interface FontFaceMethodList extends MethodList {
 		status(): CairoStatus;
 		get_type(): CairoFontType;
 	}
@@ -423,7 +444,7 @@ declare module "lgi" {
 		COLOR,
 	}
 
-	interface FontOptionsMethodList extends StaticMethodList {
+	interface FontOptionsMethodList extends MethodList {
 		create(): FontOptions;
 		copy(): FontOptions;
 		status(): CairoStatus;
@@ -448,7 +469,7 @@ declare module "lgi" {
 		subpixel_order: keyof typeof CairoSubpixelOrder;
 	};
 
-	interface ScaledFontMethodList extends StaticMethodList {
+	interface ScaledFontMethodList extends MethodList {
 		create(
 			font_face: FontFace,
 			font_matrix: Matrix,
@@ -473,7 +494,7 @@ declare module "lgi" {
 	// #endregion
 
 	// #region Matrix
-	interface MatrixMethodList extends StaticMethodList {
+	interface MatrixMethodList extends MethodList {
 		create_identity(
 			xx: number,
 			yx: number,
@@ -563,7 +584,7 @@ declare module "lgi" {
 		RASTER_SOURCE,
 	}
 
-	interface PatternMethodList extends StaticMethodList {
+	interface PatternMethodList extends MethodList {
 		status(): CairoStatus;
 		set_extend(value: CairoExtend): void;
 		get_extend(): CairoExtend;
@@ -688,7 +709,7 @@ declare module "lgi" {
 		PART,
 	}
 
-	interface RegionMethodList extends StaticMethodList {
+	interface RegionMethodList extends MethodList {
 		create(): Region;
 		create_rectangle(rect: Rectangle): Region;
 		copy(): Region;
@@ -759,7 +780,7 @@ declare module "lgi" {
 		SKIA,
 	}
 
-	interface SurfaceMethodList extends StaticMethodList {
+	interface SurfaceMethodList extends MethodList {
 		create_similar(
 			other: Surface,
 			content: CairoContent,
@@ -824,40 +845,45 @@ declare module "lgi" {
 	};
 	// #endregion
 
-	/**
-	 * @noSelf
-	 */
-	export const cairo: {
-		Antialias: typeof CairoAntialias;
-		Context: StaticMethods<ContextMethodList, Context> & {
-			create(target: Surface): Context;
-			reference(cr: Context): Context;
-			destroy(cr: Context): void;
-			rectangle_list_destroy(rectangle_list: RectangleList): void;
-			get_reference_count(cr: Context): number;
-			set_user_data(
-				cr: Context,
-				key: LuaUserdata,
-				user_data: LuaUserdata,
-				destroy: CairoDestroyCallback,
-			): CairoStatus;
-			get_user_data(cr: Context, key: LuaUserdata): LuaUserdata;
-			set_hairline(cr: Context, set_hairline: boolean): void;
-			get_hairline(cr: Context): boolean;
-		};
-		Device: StaticMethods<DeviceMethodList, Device>;
-		FontFace: StaticMethods<FontFaceMethodList, FontFace>;
-		FontOptions: StaticMethods<FontOptionsMethodList, FontOptions>;
-		FontSlant: typeof CairoFontSlant;
-		FontType: typeof CairoFontType;
-		FontWeight: typeof CairoFontWeight;
-		Format: typeof CairoFormat & {
-			cairo_format_stride_for_width(format: CairoFormat, width: number): number;
-		};
-		GradientPattern: StaticMethods<GradientPatternMethodList, Pattern>;
-		HintMetrics: typeof CairoHintMetrics;
-		HintStyle: typeof CairoHintStyle;
-		ImageSurface: {
+	namespace cairo {
+		const Antialias: typeof CairoAntialias;
+		const Context: StaticMethodsWithArg<ContextMethodList, Context> &
+			StaticMethods<{
+				create(target: Surface): Context;
+				reference(cr: Context): Context;
+				destroy(cr: Context): void;
+				rectangle_list_destroy(rectangle_list: RectangleList): void;
+				get_reference_count(cr: Context): number;
+				set_user_data(
+					cr: Context,
+					key: LuaUserdata,
+					user_data: LuaUserdata,
+					destroy: CairoDestroyCallback,
+				): CairoStatus;
+				get_user_data(cr: Context, key: LuaUserdata): LuaUserdata;
+				set_hairline(cr: Context, set_hairline: boolean): void;
+				get_hairline(cr: Context): boolean;
+			}>;
+		const Device: StaticMethodsWithArg<DeviceMethodList, Device>;
+		const FontFace: StaticMethodsWithArg<FontFaceMethodList, FontFace>;
+		const FontOptions: StaticMethodsWithArg<FontOptionsMethodList, FontOptions>;
+		const FontSlant: typeof CairoFontSlant;
+		const FontType: typeof CairoFontType;
+		const FontWeight: typeof CairoFontWeight;
+		const Format: typeof CairoFormat &
+			StaticMethods<{
+				cairo_format_stride_for_width(
+					format: CairoFormat,
+					width: number,
+				): number;
+			}>;
+		const GradientPattern: StaticMethodsWithArg<
+			GradientPatternMethodList,
+			Pattern
+		>;
+		const HintMetrics: typeof CairoHintMetrics;
+		const HintStyle: typeof CairoHintStyle;
+		const ImageSurface: StaticMethods<{
 			create(format: CairoFormat, width: number, height: number): ImageSurface;
 			create_for_data(
 				data: LuaUserdata,
@@ -871,9 +897,9 @@ declare module "lgi" {
 			get_width(surface: Surface): number;
 			get_height(surface: Surface): number;
 			get_stride(surface: Surface): number;
-		};
-		LinearPattern: StaticMethods<LinearPatternMethodList, Pattern>;
-		Matrix: StaticMethods<MatrixMethodList, Matrix> &
+		}>;
+		const LinearPattern: StaticMethodsWithArg<LinearPatternMethodList, Pattern>;
+		const Matrix: StaticMethodsWithArg<MatrixMethodList, Matrix> &
 			((
 				xx: number,
 				yx: number,
@@ -882,113 +908,118 @@ declare module "lgi" {
 				x0: number,
 				y0: number,
 			) => Matrix);
-		MeshPattern: StaticMethods<MeshPatternMethodList, Pattern>;
-		Operator: typeof CairoOperator;
-		Pattern: StaticMethods<PatternMethodList, Pattern>;
-		RadialPattern: StaticMethods<RadialPatternMethodList, Pattern>;
-		Region: StaticMethods<RegionMethodList, Region>;
-		ScaledFont: StaticMethods<ScaledFont, ScaledFont>;
-		SolidPattern: StaticMethods<SolidPatternMethodList, Pattern>;
-		Status: typeof CairoStatus & {
-			cairo_status_to_string(status: CairoStatus): string;
-		};
-		Surface: StaticMethods<SurfaceMethodList, Surface> & {
-			create_similar(
-				other: Surface,
-				content: CairoContent,
-				width: number,
-				height: number,
-			): Surface;
-			create_similar_image(
-				other: Surface,
-				format: CairoFormat,
-				width: number,
-				height: number,
-			): ImageSurface;
-			create_for_rectangle(
-				target: Surface,
-				x: number,
-				y: number,
-				width: number,
-				height: number,
-			): Surface;
-			reference(surface: Surface): Surface;
-			destroy(surface: Surface): void;
-			status(surface: Surface): CairoStatus;
-			finish(surface: Surface): void;
-			flush(surface: Surface): void;
-			get_device(surface: Surface): Device;
-			get_font_options(surface: Surface): FontOptions;
-			get_content(surface: Surface): CairoContent;
-			mark_dirty(surface: Surface): void;
-			mark_dirty_rectangle(
-				surface: Surface,
-				x: number,
-				y: number,
-				width: number,
-				height: number,
-			): void;
-			set_device_offset(
-				surface: Surface,
-				x_offset: number,
-				y_offset: number,
-			): void;
-			get_device_offset(
-				surface: Surface,
-				x_offset: number,
-				y_offset: number,
-			): void;
-			get_device_scale(
-				surface: Surface,
-				x_scale: number,
-				y_scale: number,
-			): void;
-			set_device_scale(
-				surface: Surface,
-				x_scale: number,
-				y_scale: number,
-			): void;
-			set_fallback_resolution(
-				surface: Surface,
-				x_pixels_per_inch: number,
-				y_pixels_per_inch: number,
-			): void;
-			get_fallback_resolution(
-				surface: Surface,
-				x_pixels_per_inch: number,
-				y_pixels_per_inch: number,
-			): void;
-			get_type(surface: Surface): CairoSurfaceType;
-			get_reference_count(surface: Surface): number;
-			set_user_data(
-				surface: Surface,
-				key: LuaUserdata,
-				user_data: LuaUserdata,
-				destroy: CairoDestroyCallback,
-			): CairoStatus;
-			get_user_data(surface: Surface, key: LuaUserdata): LuaUserdata;
-			copy_page(surface: Surface): void;
-			show_page(surface: Surface): void;
-			has_show_text_glyphs(surface: Surface): boolean;
-			set_mime_data(
-				surface: Surface,
-				mime_type: string,
-				data: LuaUserdata,
-				length: number,
-				destroy: CairoDestroyCallback,
-				closure: LuaUserdata,
-			): CairoStatus;
-			get_mime_data(
-				surface: Surface,
-				mime_type: string,
-				data: LuaUserdata,
-				length: number,
-			): void;
-			supports_mime_type(surface: Surface, mime_type: string): boolean;
-			map_to_image(surface: Surface, extents: Rectangle): Surface;
-			unmap_image(surface: Surface, image: Surface): void;
-		};
-		SurfacePattern: StaticMethods<SurfacePatternMethodList, Pattern>;
-		ToyFontFace: StaticMethods<ToyFontFaceMethodList, ToyFontFace>;
-	};
+		const MeshPattern: StaticMethodsWithArg<MeshPatternMethodList, Pattern>;
+		const Operator: typeof CairoOperator;
+		const Pattern: StaticMethodsWithArg<PatternMethodList, Pattern>;
+		const RadialPattern: StaticMethodsWithArg<RadialPatternMethodList, Pattern>;
+		const Region: StaticMethodsWithArg<RegionMethodList, Region>;
+		const ScaledFont: StaticMethodsWithArg<ScaledFont, ScaledFont>;
+		const SolidPattern: StaticMethodsWithArg<SolidPatternMethodList, Pattern>;
+		const Status: typeof CairoStatus &
+			StaticMethods<{
+				cairo_status_to_string(status: CairoStatus): string;
+			}>;
+		const Surface: StaticMethodsWithArg<SurfaceMethodList, Surface> &
+			StaticMethods<{
+				create_similar(
+					other: Surface,
+					content: CairoContent,
+					width: number,
+					height: number,
+				): Surface;
+				create_similar_image(
+					other: Surface,
+					format: CairoFormat,
+					width: number,
+					height: number,
+				): ImageSurface;
+				create_for_rectangle(
+					target: Surface,
+					x: number,
+					y: number,
+					width: number,
+					height: number,
+				): Surface;
+				reference(surface: Surface): Surface;
+				destroy(surface: Surface): void;
+				status(surface: Surface): CairoStatus;
+				finish(surface: Surface): void;
+				flush(surface: Surface): void;
+				get_device(surface: Surface): Device;
+				get_font_options(surface: Surface): FontOptions;
+				get_content(surface: Surface): CairoContent;
+				mark_dirty(surface: Surface): void;
+				mark_dirty_rectangle(
+					surface: Surface,
+					x: number,
+					y: number,
+					width: number,
+					height: number,
+				): void;
+				set_device_offset(
+					surface: Surface,
+					x_offset: number,
+					y_offset: number,
+				): void;
+				get_device_offset(
+					surface: Surface,
+					x_offset: number,
+					y_offset: number,
+				): void;
+				get_device_scale(
+					surface: Surface,
+					x_scale: number,
+					y_scale: number,
+				): void;
+				set_device_scale(
+					surface: Surface,
+					x_scale: number,
+					y_scale: number,
+				): void;
+				set_fallback_resolution(
+					surface: Surface,
+					x_pixels_per_inch: number,
+					y_pixels_per_inch: number,
+				): void;
+				get_fallback_resolution(
+					surface: Surface,
+					x_pixels_per_inch: number,
+					y_pixels_per_inch: number,
+				): void;
+				get_type(surface: Surface): CairoSurfaceType;
+				get_reference_count(surface: Surface): number;
+				set_user_data(
+					surface: Surface,
+					key: LuaUserdata,
+					user_data: LuaUserdata,
+					destroy: CairoDestroyCallback,
+				): CairoStatus;
+				get_user_data(surface: Surface, key: LuaUserdata): LuaUserdata;
+				copy_page(surface: Surface): void;
+				show_page(surface: Surface): void;
+				has_show_text_glyphs(surface: Surface): boolean;
+				set_mime_data(
+					surface: Surface,
+					mime_type: string,
+					data: LuaUserdata,
+					length: number,
+					destroy: CairoDestroyCallback,
+					closure: LuaUserdata,
+				): CairoStatus;
+				get_mime_data(
+					surface: Surface,
+					mime_type: string,
+					data: LuaUserdata,
+					length: number,
+				): void;
+				supports_mime_type(surface: Surface, mime_type: string): boolean;
+				map_to_image(surface: Surface, extents: Rectangle): Surface;
+				unmap_image(surface: Surface, image: Surface): void;
+			}>;
+		const SurfacePattern: StaticMethodsWithArg<
+			SurfacePatternMethodList,
+			Pattern
+		>;
+		const ToyFontFace: StaticMethodsWithArg<ToyFontFaceMethodList, ToyFontFace>;
+	}
 }
